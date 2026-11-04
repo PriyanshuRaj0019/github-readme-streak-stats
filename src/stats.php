@@ -136,19 +136,15 @@ function getContributionGraphs(string $user, ?int $startingYear = null): array
     if (empty($userCreatedDateTimeString)) {
         throw new AssertionError("Failed to retrieve contributions. This is likely a GitHub API issue.", 500);
     }
-    // extract the year from the created datetime string
-    $userCreatedYear = intval(explode("-", $userCreatedDateTimeString)[0]);
-    // if override parameter is null then define starting year
-    // as the user created year; else use the provided override year
-    $minimumYear = $startingYear ?: $userCreatedYear;
-    // make sure the minimum year is not before 2005 (the year Git was created)
-    $minimumYear = max($minimumYear, 2005);
-    // create an array of years from the user's created year to one year before the current year
+
+    // Force starting year to 2024 to fetch all backdated commits across 2024-2026
+    $minimumYear = 2024;
+
+    // create an array of years from the minimum year (2024) to one year before the current year
     $yearsToRequest = range($minimumYear, $currentYear - 1);
-    // also check the first contribution year if the year is before 2005 (the year Git was created)
-    // since the user may have backdated some commits to a specific year such as 1970 (see #448)
+    
     $contributionYears = $responses[$currentYear]->data->user->contributionsCollection->contributionYears ?? [];
-    $firstContributionYear = $contributionYears[count($contributionYears) - 1] ?? $userCreatedYear;
+    $firstContributionYear = $contributionYears[count($contributionYears) - 1] ?? 2024;
     if ($firstContributionYear < 2005) {
         array_unshift($yearsToRequest, $firstContributionYear);
     }
